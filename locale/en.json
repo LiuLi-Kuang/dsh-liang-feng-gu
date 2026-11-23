@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Peak / Valley Price Badge",
+    "description": "Shows in the conversation header whether DeepSeek API pricing is at peak or off-peak — 梁文峰 for peak, 梁文谷 for off-peak — with a hover card for the countdown and a token-saving tip. The Chinese public-holiday calendar auto-syncs on every startup with offline fallback."
+  }
+}

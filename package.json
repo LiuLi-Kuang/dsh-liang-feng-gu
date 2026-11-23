@@ -1,0 +1,52 @@
+{
+  "name": "@local/dsh-liang-feng-gu",
+  "version": "1.1.0",
+  "private": true,
+  "description": "DeepSeek Harness 峰谷价提醒：会话头部显示梁文峰/梁文谷，节假日表每次启动自动同步。",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "deepseek",
+    "plugin",
+    "peak-valley-pricing",
+    "峰谷"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LiuLi-Kuang/dsh-liang-feng-gu.git"
+  },
+  "homepage": "https://github.com/LiuLi-Kuang/dsh-liang-feng-gu#readme",
+  "bugs": "https://github.com/LiuLi-Kuang/dsh-liang-feng-gu/issues",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node scripts/verify.mjs"
+  },
+  "main": "entry.js",
+  "exports": {
+    ".": "./entry.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "entry.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "scripts/verify.mjs",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "immediately": true }
+  }
+}
