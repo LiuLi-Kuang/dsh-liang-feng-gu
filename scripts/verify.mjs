@@ -30,7 +30,7 @@ if (/\bwindow\b|\bdocument\b/.test(body)) {
 }
 
 const factory = new Function(
-  `${body}\n;return { classify, nextSwitch, humanSpan, dayLine, snapshot, normalizePayload, applyHolidayData, resetHolidayData, subscribe, BUILTIN_DAYS }`,
+  `${body}\n;return { classify, nextSwitch, humanSpan, dayLine, snapshot, normalizePayload, applyHolidayData, resetHolidayData, subscribe, setLocale, BUILTIN_DAYS }`,
 )
 const api = factory()
 
@@ -145,6 +145,30 @@ check('snapshot.switchClock', snap.switchClock, '18:00')
 check('snapshot.switchIn', snap.switchIn, '3 小时 10 分')
 check('snapshot.targetName', snap.targetName, '梁文谷')
 check('snapshot.data（reset 后为内置）', snap.data, '内置 2026 清单')
+check('snapshot.aria（中文）', snap.aria.startsWith('当前高峰价：梁文峰。'), true)
+
+console.log('locale — English')
+api.setLocale('en')
+const snapEn = api.snapshot(thursday)
+check('en: 徽标名字保持梁文峰', snapEn.name, '梁文峰')
+check('en: price', snapEn.price, 'Peak price')
+check('en: priceNote', snapEn.priceNote, 'Peak is 2x the off-peak price')
+check('en: targetName 保持梁文谷', snapEn.targetName, '梁文谷')
+check('en: dayLine workday', api.dayLine('workday'), 'Mon–Fri · 9:00–12:00 / 14:00–18:00 are peak')
+check('en: dayLine holiday', api.dayLine('holiday'), 'Public holiday · off-peak all day')
+check('en: dayLine makeup', api.dayLine('makeup'), 'Make-up workday · still counts as weekend, off-peak all day')
+check('en: dayLine weekend', api.dayLine('weekend'), 'Weekend · off-peak all day')
+check('en: humanSpan 90min', api.humanSpan(90 * 60 * 1000), '1h 30m')
+check('en: humanSpan 25min', api.humanSpan(25 * 60 * 1000), '25m')
+check('en: switchIn', snapEn.switchIn, '3h 10m')
+check('en: data builtin', snapEn.data, 'Built-in 2026 table')
+check('en: aria', snapEn.aria.startsWith('Currently Peak price: 梁文峰.'), true)
+
+console.log('locale — 切回中文 / 非法值兜底')
+api.setLocale('zh')
+check('setLocale 回到 zh', api.snapshot(thursday).price, '高峰价')
+api.setLocale('fr')
+check('未知语言回落 zh', api.snapshot(thursday).price, '高峰价')
 
 console.log('')
 if (failed > 0) {

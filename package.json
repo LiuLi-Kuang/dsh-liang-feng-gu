@@ -1,8 +1,8 @@
 {
   "name": "@local/dsh-liang-feng-gu",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
-  "description": "DeepSeek Harness 峰谷价提醒：会话头部显示梁文峰/梁文谷，节假日表每次启动自动同步。",
+  "description": "DeepSeek Harness 峰谷价提醒：会话头部显示梁文峰/梁文谷，节假日表每次启动自动同步，界面中英双语跟随系统语言。",
   "license": "MIT",
   "type": "module",
   "keywords": [

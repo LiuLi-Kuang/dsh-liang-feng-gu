@@ -167,7 +167,7 @@
       .lfg-tip__head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px; font-weight: 600; }
       .lfg-tip__head small { font-weight: 500; opacity: .62; }
       .lfg-tip__row { display: flex; align-items: flex-start; gap: 8px; opacity: .86; }
-      .lfg-tip__row > span:first-child { flex: none; width: 34px; opacity: .6; }
+      .lfg-tip__row > span:first-child { flex: none; width: 40px; opacity: .6; }
       .lfg-tip__row > span:last-child { flex: 1 1 auto; min-width: 0; }
       .lfg-tip__hint {
         margin-top: 7px;
@@ -279,6 +279,14 @@
           <div class="lfg-tip__row"><span>数据</span><span>2026 / 2027 · 11-24 已同步</span></div>
           <div class="lfg-tip__hint">省 token：长任务留到谷时再跑，同样的活少花一半。</div>
         </div>
+        <div class="lfg-tip">
+          <div class="lfg-tip__head">梁文峰 <small>Peak price · Beijing time 10:32</small></div>
+          <div class="lfg-tip__row"><span>Time</span><span>Mon–Fri · 9:00–12:00 / 14:00–18:00 are peak</span></div>
+          <div class="lfg-tip__row"><span>Price</span><span>Peak is 2x the off-peak price</span></div>
+          <div class="lfg-tip__row"><span>Switch</span><span>at 12:00 to 梁文谷 · in 1h 28m</span></div>
+          <div class="lfg-tip__row"><span>Data</span><span>2026 / 2027 · Nov 24 synced</span></div>
+          <div class="lfg-tip__hint">Save tokens: run long jobs in off-peak hours — same work, half the cost.</div>
+        </div>
       </div>
       <div class="tip-row tip-row--dark">
         <div class="lfg-tip">
@@ -297,6 +305,8 @@
       截图红圈处、右侧面板按钮的左边。倒计时每 15 秒刷新一次；<code>prefers-reduced-motion</code> 下呼吸动画自动关闭。
       「数据」行显示当前生效的节假日表：每次打开页面自动同步当年 + 次年（默认上游 timor.tech），
       失败时回退到 localStorage 缓存，再不行用内置 2026 表。
+      界面中英双语、默认跟随系统语言：右边的 English 卡片即英文系统下的样子（徽标名字两种语言都保留「梁文峰 / 梁文谷」）；
+      想固定语言，控制台执行 <code>localStorage.setItem('dsh-liang-feng-gu:locale', 'en')</code> 后刷新。
     </p>
   </body>
 </html>

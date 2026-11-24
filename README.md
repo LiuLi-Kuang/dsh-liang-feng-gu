@@ -33,6 +33,18 @@ dsh plugin add <本目录的绝对路径>
 
 插件是 `link:` 方式挂进 profile 的：改 `client.js` 后刷新页面即生效；改 `entry.js`（Host 半侧）后需要**重启 DSH**。
 
+## 语言
+
+**默认跟随系统语言**：读浏览器的 `navigator.languages`，`zh-*` 显示中文、`en-*` 显示 English，其余语言回落 English。两种语言下徽标都显示「梁文峰 / 梁文谷」——这俩名字是梗本身，翻译了就不好玩了；跟随语言切换的是悬浮卡、倒计时、时段说明等全部其余文案。
+
+想固定语言（比如中文系统想看英文界面），在 DSH 页面的控制台执行一次后刷新：
+
+```js
+localStorage.setItem('dsh-liang-feng-gu:locale', 'en')   // 或 'zh'
+```
+
+文案表在 `client.js` 的 `STRINGS`（zh / en 两份，含各自的时长、日期、aria 格式化函数）。
+
 ## 判定规则（官方口径）
 
 来自 DeepSeek API 价格页脚注 2，[原文](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)：
@@ -74,7 +86,7 @@ dsh plugin add <本目录的绝对路径>
 npm test        # node scripts/verify.mjs，零依赖，Node 18+
 ```
 
-`scripts/verify.mjs` 会把 `client.js` 里 `#region core` 标记之间的纯逻辑抠出来跑约 40 项断言（窗口边界、节假日/调休、次年退回规则、上游归一化、切换时刻计算等）。CI（`.github/workflows/ci.yml`）在每次 push / PR 时跑同一份脚本。
+`scripts/verify.mjs` 会把 `client.js` 里 `#region core` 标记之间的纯逻辑抠出来跑约 55 项断言（窗口边界、节假日/调休、次年退回规则、上游归一化、切换时刻计算、中英文文案等）。CI（`.github/workflows/ci.yml`）在每次 push / PR 时跑同一份脚本。
 
 | 想改什么 | 改哪里 |
 |---|---|
@@ -84,7 +96,7 @@ npm test        # node scripts/verify.mjs，零依赖，Node 18+
 | 同步频率 | `client.js` 的 `SYNC_INTERVAL_MS` |
 | 徽标刷新频率 | `client.js` 组件里的 `setInterval(..., 15000)` |
 | 配色 / 卡片样式 | `client.js` 的 `STYLE`（深色在 `body[data-ds-dark-theme]` 那几段） |
-| 文案 | `snapshot()` 各字段与 `dayLine()` |
+| 文案（中/英） | `client.js` 的 `STRINGS` |
 
 改 core 逻辑后跑 `npm test`；`#region` 标记之间的代码不要碰 `window` / `document`（测试要无头执行）。
 

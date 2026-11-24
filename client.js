@@ -19,7 +19,7 @@ window.__ModuleLoader__.load({
     })()
 
     /* ================================================================== *
-     * core：峰谷判定 + 节假日表。
+     * core：峰谷判定 + 节假日表 + 文案。
      * 这一段不碰 DOM、不碰 React —— scripts/verify.mjs 把两个 region
      * 标记之间的代码抠出来直接跑断言（npm test）。
      * ================================================================== */
@@ -120,6 +120,82 @@ window.__ModuleLoader__.load({
 
     const pad2 = (n) => String(n).padStart(2, '0')
 
+    const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    /** 界面文案。徽标名字（梁文峰/梁文谷）是梗本身，两种语言下都不翻译。 */
+    const STRINGS = {
+      zh: {
+        badgeLabel: '峰谷提醒',
+        peakPrice: '高峰价',
+        valleyPrice: '空闲价',
+        peakNote: '高峰价为空闲价的 2 倍',
+        valleyNote: '空闲价为高峰价的一半',
+        dayHoliday: '法定节假日 · 全天空闲',
+        dayMakeup: '调休上班日 · 仍按周末算，全天空闲',
+        dayWeekend: '周末 · 全天空闲',
+        dayWorkday: '周一至周五 · 9:00–12:00 / 14:00–18:00 为峰',
+        dataBuiltin: '内置 2026 清单',
+        dataSynced: '已同步',
+        dataCache: '缓存',
+        tipTime: '时段',
+        tipPrice: '价格',
+        tipSwitch: '切换',
+        tipData: '数据',
+        tipClockPrefix: '北京时间',
+        tipHint: '省 token：长任务留到谷时再跑，同样的活少花一半。',
+        formatSpan: (hours, minutes) => {
+          if (hours === 0) return `${minutes} 分钟`
+          if (minutes === 0) return `${hours} 小时`
+          return `${hours} 小时 ${minutes} 分`
+        },
+        formatDate: (p) => `${pad2(p.month)}-${pad2(p.day)}`,
+        formatSwitch: (clock, target, span) => `${clock} 转${target} · ${span}后`,
+        formatAria: (snap) =>
+          `当前${snap.price}：${snap.name}。${snap.day}。${
+            snap.switchIn === '' ? '' : `距转${snap.targetName}还有${snap.switchIn}。`
+          }`,
+      },
+      en: {
+        badgeLabel: 'Peak/Valley badge',
+        peakPrice: 'Peak price',
+        valleyPrice: 'Off-peak price',
+        peakNote: 'Peak is 2x the off-peak price',
+        valleyNote: 'Off-peak is 50% of the peak price',
+        dayHoliday: 'Public holiday · off-peak all day',
+        dayMakeup: 'Make-up workday · still counts as weekend, off-peak all day',
+        dayWeekend: 'Weekend · off-peak all day',
+        dayWorkday: 'Mon–Fri · 9:00–12:00 / 14:00–18:00 are peak',
+        dataBuiltin: 'Built-in 2026 table',
+        dataSynced: 'synced',
+        dataCache: 'cached',
+        tipTime: 'Time',
+        tipPrice: 'Price',
+        tipSwitch: 'Switch',
+        tipData: 'Data',
+        tipClockPrefix: 'Beijing time',
+        tipHint: 'Save tokens: run long jobs in off-peak hours — same work, half the cost.',
+        formatSpan: (hours, minutes) => {
+          if (hours === 0) return `${minutes}m`
+          if (minutes === 0) return `${hours}h`
+          return `${hours}h ${minutes}m`
+        },
+        formatDate: (p) => `${MONTHS_EN[p.month - 1]} ${String(p.day)}`,
+        formatSwitch: (clock, target, span) => `at ${clock} to ${target} · in ${span}`,
+        formatAria: (snap) =>
+          `Currently ${snap.price}: ${snap.name}. ${snap.day}. ${
+            snap.switchIn === '' ? '' : `Switches to ${snap.targetName} in ${snap.switchIn}.`
+          }`,
+      },
+    }
+
+    /* 语言状态：默认 zh；core 外面的 detectLocale() 在加载时按系统语言设置。 */
+    let currentLocale = 'zh'
+    const setLocale = (locale) => {
+      currentLocale = locale === 'en' ? 'en' : 'zh'
+    }
+    const getLocale = () => currentLocale
+    const strings = () => STRINGS[currentLocale]
+
     const bjParts = (ms) => {
       const d = new Date(ms + BJ)
       return {
@@ -172,14 +248,10 @@ window.__ModuleLoader__.load({
       return null
     }
 
-    /** 「2 小时 15 分」；不足一分钟算 1 分钟，避免停在 0 分钟。 */
+    /** 「2 小时 15 分 / 2h 15m」；不足一分钟算 1 分钟，避免停在 0 分钟。 */
     const humanSpan = (ms) => {
       const total = Math.max(1, Math.round(ms / MIN))
-      const hours = Math.floor(total / 60)
-      const minutes = total % 60
-      if (hours === 0) return `${minutes} 分钟`
-      if (minutes === 0) return `${hours} 小时`
-      return `${hours} 小时 ${minutes} 分`
+      return strings().formatSpan(Math.floor(total / 60), total % 60)
     }
 
     const hhmm = (ms) => {
@@ -187,25 +259,25 @@ window.__ModuleLoader__.load({
       return `${pad2(p.hour)}:${pad2(p.minute)}`
     }
 
-    const mmdd = (ms) => {
-      const p = bjParts(ms)
-      return `${pad2(p.month)}-${pad2(p.day)}`
-    }
+    /** 「11-24 / Nov 24」。 */
+    const dateLabel = (ms) => strings().formatDate(bjParts(ms))
 
     /** 悬浮卡里的「谁在生效」一行。 */
     const dayLine = (kind) => {
-      if (kind === 'holiday') return '法定节假日 · 全天空闲'
-      if (kind === 'makeup') return '调休上班日 · 仍按周末算，全天空闲'
-      if (kind === 'weekend') return '周末 · 全天空闲'
-      return '周一至周五 · 9:00–12:00 / 14:00–18:00 为峰'
+      const t = strings()
+      if (kind === 'holiday') return t.dayHoliday
+      if (kind === 'makeup') return t.dayMakeup
+      if (kind === 'weekend') return t.dayWeekend
+      return t.dayWorkday
     }
 
     /** 悬浮卡「数据」行：当前用的是哪份节假日表。 */
     const dataLine = () => {
-      if (dataMeta.at === 0) return '内置 2026 清单'
+      const t = strings()
+      if (dataMeta.at === 0) return t.dataBuiltin
       const years = dataMeta.years.length > 0 ? dataMeta.years.join(' / ') : '—'
-      const via = dataMeta.source === 'cache' ? '缓存' : '已同步'
-      return `${years} · ${mmdd(dataMeta.at)} ${via}`
+      const via = dataMeta.source === 'cache' ? t.dataCache : t.dataSynced
+      return `${years} · ${dateLabel(dataMeta.at)} ${via}`
     }
 
     /**
@@ -274,13 +346,14 @@ window.__ModuleLoader__.load({
     const snapshot = (now = Date.now()) => {
       const state = classify(now)
       const peak = state.phase === 'peak'
+      const t = strings()
       const at = nextSwitch(now, state.phase)
-      return {
+      const snap = {
         phase: state.phase,
         name: peak ? '梁文峰' : '梁文谷',
-        price: peak ? '高峰价' : '空闲价',
+        price: peak ? t.peakPrice : t.valleyPrice,
         day: dayLine(state.kind),
-        priceNote: peak ? '高峰价为空闲价的 2 倍' : '空闲价为高峰价的一半',
+        priceNote: peak ? t.peakNote : t.valleyNote,
         switchAt: at,
         switchIn: at === null ? '' : humanSpan(at - now),
         switchClock: at === null ? '' : hhmm(at),
@@ -288,9 +361,39 @@ window.__ModuleLoader__.load({
         clock: hhmm(now),
         data: dataLine(),
       }
+      snap.aria = t.formatAria(snap)
+      return snap
     }
 
     /* #endregion core */
+
+    /* ---------------------------------------------------------------- *
+     * 语言：默认跟随系统（navigator.languages），localStorage 可覆盖。
+     * zh* → 中文，en* → English，其余回落 English。
+     * ---------------------------------------------------------------- */
+    const LOCALE_KEY = 'dsh-liang-feng-gu:locale'
+
+    const detectLocale = () => {
+      try {
+        const saved = window.localStorage.getItem(LOCALE_KEY)
+        if (saved === 'zh' || saved === 'en') return saved
+      } catch {
+        /* 读不到就当没有 */
+      }
+      const tags = []
+      if (typeof navigator !== 'undefined' && navigator !== null) {
+        if (Array.isArray(navigator.languages)) tags.push(...navigator.languages)
+        if (typeof navigator.language === 'string') tags.push(navigator.language)
+      }
+      for (const tag of tags) {
+        const lower = String(tag).toLowerCase()
+        if (lower.startsWith('zh')) return 'zh'
+        if (lower.startsWith('en')) return 'en'
+      }
+      return 'en'
+    }
+
+    setLocale(detectLocale())
 
     /* ---------------------------------------------------------------- *
      * 节假日同步：每次打开页面取一次（当年 + 次年），之后每 6 小时再取。
@@ -436,7 +539,8 @@ window.__ModuleLoader__.load({
 }
 
 /* 悬浮卡：固定定位 + 实色底。主题的 --dsw-specific-menu 是半透明的，正文会透上来。
- * 正常走 portal 挂到 body；万一退回内联（没有 react-dom），下面这组复位也兜得住。 */
+ * 正常走 portal 挂到 body；万一退回内联（没有 react-dom），下面这组复位也兜得住。
+ * 标签列 40px：中文两字 + 英文 Switch 都放得下。 */
 .lfg-tip {
   position: fixed;
   z-index: 2147483100;
@@ -484,7 +588,7 @@ window.__ModuleLoader__.load({
 
 .lfg-tip__row > span:first-child {
   flex: none;
-  width: 34px;
+  width: 40px;
   opacity: .6;
 }
 
@@ -553,9 +657,7 @@ body[data-ds-dark-theme] .lfg-tip__hint {
 
       const hideTip = () => setTip(null)
 
-      const label = `当前${snap.price}：${snap.name}。${snap.day}。${
-        snap.switchIn === '' ? '' : `距转${snap.targetName}还有${snap.switchIn}。`
-      }`
+      const t = strings()
 
       const tipNode =
         tip === null
@@ -571,23 +673,23 @@ body[data-ds-dark-theme] .lfg-tip__hint {
                 'div',
                 { className: 'lfg-tip__head' },
                 snap.name,
-                h('small', null, `${snap.price} · 北京时间 ${snap.clock}`),
+                h('small', null, `${snap.price} · ${t.tipClockPrefix} ${snap.clock}`),
               ),
-              h('div', { className: 'lfg-tip__row' }, h('span', null, '时段'), h('span', null, snap.day)),
-              h('div', { className: 'lfg-tip__row' }, h('span', null, '价格'), h('span', null, snap.priceNote)),
+              h('div', { className: 'lfg-tip__row' }, h('span', null, t.tipTime), h('span', null, snap.day)),
+              h('div', { className: 'lfg-tip__row' }, h('span', null, t.tipPrice), h('span', null, snap.priceNote)),
               snap.switchIn === ''
                 ? null
                 : h(
                     'div',
                     { className: 'lfg-tip__row' },
-                    h('span', null, '切换'),
-                    h('span', null, `${snap.switchClock} 转${snap.targetName} · ${snap.switchIn}后`),
+                    h('span', null, t.tipSwitch),
+                    h('span', null, t.formatSwitch(snap.switchClock, snap.targetName, snap.switchIn)),
                   ),
-              h('div', { className: 'lfg-tip__row' }, h('span', null, '数据'), h('span', null, snap.data)),
+              h('div', { className: 'lfg-tip__row' }, h('span', null, t.tipData), h('span', null, snap.data)),
               h(
                 'div',
                 { className: 'lfg-tip__hint' },
-                '省 token：长任务留到谷时再跑，同样的活少花一半。',
+                t.tipHint,
               ),
             )
 
@@ -601,7 +703,7 @@ body[data-ds-dark-theme] .lfg-tip__hint {
             'data-phase': snap.phase,
             role: 'status',
             tabIndex: 0,
-            'aria-label': label,
+            'aria-label': snap.aria,
             onMouseEnter: showTip,
             onMouseLeave: hideTip,
             onFocus: showTip,
@@ -646,7 +748,7 @@ body[data-ds-dark-theme] .lfg-tip__hint {
           try {
             ctx.slots.inject(name, () =>
               ctx.slots.register(
-                { name, id: 'liang-feng-gu-badge', order: 100, label: '峰谷提醒' },
+                { name, id: 'liang-feng-gu-badge', order: 100, label: strings().badgeLabel },
                 PriceBadge,
               ),
             )

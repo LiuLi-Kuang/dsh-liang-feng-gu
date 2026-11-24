@@ -27,6 +27,18 @@ Or via CLI: `dsh plugin add <path>`.
 
 The plugin is linked into your profile: edits to `client.js` apply on page refresh; edits to `entry.js` (the host half) require a DSH restart.
 
+## Language
+
+**Follows the system language by default**: the browser's `navigator.languages` is read — `zh-*` gets Chinese, `en-*` gets English, anything else falls back to English. In both languages the badge itself shows 梁文峰 / 梁文谷 — those names are the joke, translating them would miss the point; everything else (hover card, countdown, window descriptions) is localized.
+
+To pin a language (e.g. view English on a Chinese system), run this once in the DSH page console and refresh:
+
+```js
+localStorage.setItem('dsh-liang-feng-gu:locale', 'en')   // or 'zh'
+```
+
+String tables live in `STRINGS` inside `client.js` (zh / en, each with its own span/date/aria formatters).
+
 ## Pricing rule (official)
 
 From footnote 2 of the [official pricing page](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/) — Beijing time (UTC+8):
@@ -56,7 +68,7 @@ browser half (client.js) ──GET /plugins/liang-feng-gu/holidays?year=YYYY─�
 npm test    # node scripts/verify.mjs — zero dependencies, Node 18+
 ```
 
-`scripts/verify.mjs` extracts the pure logic between the `#region core` markers in `client.js` and runs ~40 assertions (window boundaries, holidays/make-up days, missing-year fallback, upstream payload normalization, switch-time computation). CI runs the same script on every push/PR.
+`scripts/verify.mjs` extracts the pure logic between the `#region core` markers in `client.js` and runs ~55 assertions (window boundaries, holidays/make-up days, missing-year fallback, upstream payload normalization, switch-time computation, zh/en strings). CI runs the same script on every push/PR.
 
 Keep the `#region` markers intact and free of `window`/`document` references — tests execute that block headless. See the Chinese [README](README.md) for a table of what-to-edit-where.
 
